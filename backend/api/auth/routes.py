@@ -42,11 +42,11 @@ def check_attribute():
 def register():
     # print('register called')
     
-    user_name = request.form['username']
+    username = request.form['username']
     password = request.form['password']
     email = request.form['email']
 
-    check_username = Users.query.filter_by(username = user_name).first()
+    check_username = Users.query.filter_by(username = username).first()
     if check_username:
         return jsonify({"error": "user_name already exists"}), 400
     check_mail = Users.query.filter_by(user_email = email).first()
@@ -56,7 +56,7 @@ def register():
     token = jwt.encode(
         payload = {
             'email': email,
-            'user_name': user_name,
+            'user_name': username,
             'password': password,
             # todo
             'exp': datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=30)
@@ -128,26 +128,29 @@ def login_post():
         
         login_user(user, remember=remember)
     
-        return abort(200)
+        return jsonify({"message": "user registration successful"}), 200
+    return jsonify({"message": "Login page loaded"}), 200
     
 @auth_bp.route('/forgot_password/', methods=['GET', 'POST'])
 def forgot_password():
     if request.method == 'POST':
         email = request.form.get('email')
         
-        user = Users.query.filter_by(email=email).first()
+        user = Users.query.filter_by(user_email=email).first()
         if not user:
             flash('No account registered with this email!!')
             return abort(404)
-
+        mail = Mail(current_app)
         msg = Message(
             'Code for validation',
             recipients=[email],  # email passed from the form
-            body='Your password reset code is: 123456'
+            body='Your password reset code is: 123456',
+            sender = 'Thelake2004@gmail.com'
+            
         )
         mail.send(msg)
         flash('Reset code has been sent to your email!')
-        return abort(200)
+        return jsonify({"message": "Mail sent successful"}), 200
     
 @auth_bp.route('/logout')
 def logout():
